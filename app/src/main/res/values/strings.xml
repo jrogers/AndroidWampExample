@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Wamp Example</string>
+    <string name="button_start">Start</string>
+    <string name="button_stop">Stop</string>
+    <string name="label_server_address">Router address:</string>
+    <string name="label_operation_name">com.example.add</string>
+    <string name="label_param_1">Parameter 1</string>
+    <string name="label_param_2">Parameter 2</string>
+    <string name="button_call">Call</string>
+    <string name="label_result">Result:</string>
+    <string name="label_event_result">Event result:</string>
+    <string name="label_session1_status">Session 1 status:</string>
+    <string name="label_session2_status">Session 2 status:</string>
+
+</resources>
