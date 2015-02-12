@@ -1,7 +1,5 @@
 package io.jrogers.android.wampexample;
 
-import android.os.Handler;
-import android.os.Looper;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -14,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
 import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
@@ -28,8 +27,6 @@ import ws.wamp.jawampa.transport.SimpleWampWebsocketListener;
 
 
 public class MainActivity extends ActionBarActivity {
-
-    private Handler mHandler;
 
     private WampRouter mRouter;
     private SimpleWampWebsocketListener mServer;
@@ -52,7 +49,6 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mHandler = new Handler(Looper.getMainLooper());
         setContentView(R.layout.activity_main);
         mParam1Text = (EditText) findViewById(R.id.text_param_1);
         mParam2Text = (EditText) findViewById(R.id.text_param_2);
@@ -124,127 +120,85 @@ public class MainActivity extends ActionBarActivity {
             return;
         }
 
-        mClient1.statusChanged().subscribe(new Action1<WampClient.Status>() {
+        mClient1.statusChanged().observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<WampClient.Status>() {
             @Override
             public void call(final WampClient.Status status) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSession1StatusText.setText("Status changed to " + status);
-                        if (status == WampClient.Status.Connected) {
-                            // Register a procedure
-                            mClient1.registerProcedure("com.example.add").subscribe(new Action1<Request>() {
-                                @Override
-                                public void call(Request request) {
-                                    if (request.arguments() == null || request.arguments().size() != 2
-                                            || !request.arguments().get(0).canConvertToLong()
-                                            || !request.arguments().get(1).canConvertToLong())
-                                    {
-                                        try {
-                                            request.replyError(new ApplicationError(ApplicationError.INVALID_PARAMETER));
-                                        } catch (ApplicationError e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    else {
-                                        long a = request.arguments().get(0).asLong();
-                                        long b = request.arguments().get(1).asLong();
-                                        request.reply(a + b);
-                                    }
+                mSession1StatusText.setText("Status changed to " + status);
+                if (status == WampClient.Status.Connected) {
+                    // Register a procedure
+                    mClient1.registerProcedure("com.example.add")
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(new Action1<Request>() {
+                        @Override
+                        public void call(Request request) {
+                            if (request.arguments() == null || request.arguments().size() != 2
+                                    || !request.arguments().get(0).canConvertToLong()
+                                    || !request.arguments().get(1).canConvertToLong()) {
+                                try {
+                                    request.replyError(new ApplicationError(ApplicationError.INVALID_PARAMETER));
+                                } catch (ApplicationError e) {
+                                    e.printStackTrace();
                                 }
-                            });
+                            } else {
+                                long a = request.arguments().get(0).asLong();
+                                long b = request.arguments().get(1).asLong();
+                                request.reply(a + b);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         }, new Action1<Throwable>() {
             @Override
             public void call(final Throwable t) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSession1StatusText.setText("Session ended with error " + t);
-                    }
-                });
+                mSession1StatusText.setText("Session ended with error " + t);
             }
         }, new Action0() {
             @Override
             public void call() {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSession1StatusText.setText("Session ended normally");
-                    }
-                });
+                mSession1StatusText.setText("Session ended normally");
             }
         });
 
-        mClient2.statusChanged().subscribe(new Action1<WampClient.Status>() {
+        mClient2.statusChanged().observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Action1<WampClient.Status>() {
             @Override
             public void call(final WampClient.Status status) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSession2StatusText.setText("Status changed to " + status);
-                        if (status == WampClient.Status.Connected) {
-                            mEventSubscription = mClient2.makeSubscription("test.event", String.class)
-                                    .subscribe(new Action1<String>() {
-                                        @Override
-                                        public void call(final String result) {
-                                            mHandler.post(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    mEventResultText.setText("Received event test.event with value " + result);
-                                                }
-                                            });
-                                        }
-                                    }, new Action1<Throwable>() {
-                                        @Override
-                                        public void call(final Throwable t) {
-                                            mHandler.post(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    mEventResultText.setText("Completed event test.event with error " + t);
-                                                }
-                                            });
-                                        }
-                                    }, new Action0() {
-                                        @Override
-                                        public void call() {
-                                            mHandler.post(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    mEventResultText.setText("Completed event test.event");
-                                                }
-                                            });
-                                        }
-                                    });
+                mSession2StatusText.setText("Status changed to " + status);
+                if (status == WampClient.Status.Connected) {
+                    mEventSubscription = mClient2.makeSubscription("test.event", String.class)
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(new Action1<String>() {
+                                @Override
+                                public void call(final String result) {
+                                    mEventResultText.setText("Received event test.event with value " + result);
+                                }
+                            }, new Action1<Throwable>() {
+                                @Override
+                                public void call(final Throwable t) {
+                                    mEventResultText.setText("Completed event test.event with error " + t);
+                                }
+                            }, new Action0() {
+                                @Override
+                                public void call() {
+                                    mEventResultText.setText("Completed event test.event");
+                                }
+                            });
 
-                            // Subscribe on the topic
+                    // Subscribe on the topic
 
-                        }
-                    }
-                });
+                }
             }
         }, new Action1<Throwable>() {
             @Override
             public void call(final Throwable t) {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSession2StatusText.setText("Session ended with error " + t);
-                    }
-                });
+                mSession2StatusText.setText("Session ended with error " + t);
             }
         }, new Action0() {
             @Override
             public void call() {
-                mHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mSession2StatusText.setText("Session ended normally");
-                    }
-                });
+                mSession2StatusText.setText("Session ended normally");
             }
         });
 
@@ -299,25 +253,15 @@ public class MainActivity extends ActionBarActivity {
             final long param1 = Long.valueOf(mParam1Text.getText().toString());
             final long param2 = Long.valueOf(mParam2Text.getText().toString());
             Observable<Long> result1 = mClient2.call("com.example.add", Long.class, param1, param2);
-            result1.subscribe(new Action1<Long>() {
+            result1.observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<Long>() {
                 @Override
                 public void call(final Long result) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mResultText.setText("Completed add with result " + result);
-                        }
-                    });
+                    mResultText.setText("Completed add with result " + result);
                 }
             }, new Action1<Throwable>() {
                 @Override
                 public void call(final Throwable error) {
-                    mHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            mResultText.setText("Completed add with error " + error);
-                        }
-                    });
+                    mResultText.setText("Completed add with error " + error);
                 }
             });
         }
