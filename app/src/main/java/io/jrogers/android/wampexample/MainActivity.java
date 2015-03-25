@@ -10,9 +10,8 @@ import android.widget.TextView;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
-import rx.Observable;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
+import rx.android.app.AppObservable;
 import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
@@ -24,7 +23,6 @@ import ws.wamp.jawampa.WampError;
 import ws.wamp.jawampa.WampRouter;
 import ws.wamp.jawampa.WampRouterBuilder;
 import ws.wamp.jawampa.transport.SimpleWampWebsocketListener;
-
 
 public class MainActivity extends ActionBarActivity {
 
@@ -120,15 +118,14 @@ public class MainActivity extends ActionBarActivity {
             return;
         }
 
-        mClient1.statusChanged().observeOn(AndroidSchedulers.mainThread())
+        AppObservable.bindActivity(this, mClient1.statusChanged())
                 .subscribe(new Action1<WampClient.Status>() {
             @Override
             public void call(final WampClient.Status status) {
                 mSession1StatusText.setText("Status changed to " + status);
                 if (status == WampClient.Status.Connected) {
                     // Register a procedure
-                    mClient1.registerProcedure("com.example.add")
-                            .observeOn(AndroidSchedulers.mainThread())
+                    AppObservable.bindActivity(MainActivity.this, mClient1.registerProcedure("com.example.add"))
                             .subscribe(new Action1<Request>() {
                         @Override
                         public void call(Request request) {
@@ -136,7 +133,8 @@ public class MainActivity extends ActionBarActivity {
                                     || !request.arguments().get(0).canConvertToLong()
                                     || !request.arguments().get(1).canConvertToLong()) {
                                 try {
-                                    request.replyError(new ApplicationError(ApplicationError.INVALID_PARAMETER));
+                                    request.replyError(new ApplicationError(
+                                            ApplicationError.INVALID_PARAMETER));
                                 } catch (ApplicationError e) {
                                     e.printStackTrace();
                                 }
@@ -161,23 +159,25 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
-        mClient2.statusChanged().observeOn(AndroidSchedulers.mainThread())
+        AppObservable.bindActivity(this, mClient2.statusChanged())
                 .subscribe(new Action1<WampClient.Status>() {
             @Override
             public void call(final WampClient.Status status) {
                 mSession2StatusText.setText("Status changed to " + status);
                 if (status == WampClient.Status.Connected) {
-                    mEventSubscription = mClient2.makeSubscription("test.event", String.class)
-                            .observeOn(AndroidSchedulers.mainThread())
+                    mEventSubscription = AppObservable.bindActivity(MainActivity.this,
+                                    mClient2.makeSubscription("test.event", String.class))
                             .subscribe(new Action1<String>() {
                                 @Override
                                 public void call(final String result) {
-                                    mEventResultText.setText("Received event test.event with value " + result);
+                                    mEventResultText.setText("Received event test.event with value "
+                                            + result);
                                 }
                             }, new Action1<Throwable>() {
                                 @Override
                                 public void call(final Throwable t) {
-                                    mEventResultText.setText("Completed event test.event with error " + t);
+                                    mEventResultText.setText("Completed event test.event with error "
+                                            + t);
                                 }
                             }, new Action0() {
                                 @Override
@@ -252,8 +252,8 @@ public class MainActivity extends ActionBarActivity {
         if (mClient2 != null) {
             final long param1 = Long.valueOf(mParam1Text.getText().toString());
             final long param2 = Long.valueOf(mParam2Text.getText().toString());
-            Observable<Long> result1 = mClient2.call("com.example.add", Long.class, param1, param2);
-            result1.observeOn(AndroidSchedulers.mainThread()).subscribe(new Action1<Long>() {
+            AppObservable.bindActivity(this, mClient2.call("com.example.add", Long.class, param1,
+                    param2)).subscribe(new Action1<Long>() {
                 @Override
                 public void call(final Long result) {
                     mResultText.setText("Completed add with result " + result);
