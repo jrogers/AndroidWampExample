@@ -2,12 +2,17 @@
 <resources>
 
     <string name="app_name">Wamp Example</string>
-    <string name="button_start">Start</string>
-    <string name="button_stop">Stop</string>
-    <string name="label_server_address">Router address:</string>
+    <string name="button_start_router">Start local router</string>
+    <string name="button_stop_router">Stop local router</string>
+    <string name="button_start">Start client</string>
+    <string name="button_stop">Stop client</string>
+    <string name="label_router_address">Router address:</string>
+    <string name="default_router_address">ws://localhost:8080/ws1</string>
     <string name="label_operation_name">com.example.add</string>
     <string name="label_param_1">Parameter 1</string>
+    <string name="default_param_1">33</string>
     <string name="label_param_2">Parameter 2</string>
+    <string name="default_param_2">66</string>
     <string name="button_call">Call</string>
     <string name="label_result">Result:</string>
     <string name="label_event_result">Event result:</string>

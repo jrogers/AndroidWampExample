@@ -2,6 +2,7 @@ package io.jrogers.android.wampexample;
 
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,6 +35,7 @@ public class MainActivity extends ActionBarActivity {
     private Subscription mEventPublication;
     private Subscription mEventSubscription;
 
+    private EditText mRouterAddressText;
     private EditText mParam1Text;
     private EditText mParam2Text;
     private TextView mResultText;
@@ -48,12 +50,29 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mRouterAddressText = (EditText) findViewById(R.id.text_router_address);
         mParam1Text = (EditText) findViewById(R.id.text_param_1);
         mParam2Text = (EditText) findViewById(R.id.text_param_2);
         mResultText = (TextView) findViewById(R.id.text_result);
         mSession1StatusText = (TextView) findViewById(R.id.text_session1_status);
         mSession2StatusText = (TextView) findViewById(R.id.text_session2_status);
         mEventResultText = (TextView) findViewById(R.id.text_event_result);
+        Button startRouterButton = (Button) findViewById(R.id.button_start_router);
+        startRouterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startRouter();
+            }
+        });
+
+        Button stopRouterButton = (Button) findViewById(R.id.button_stop_router);
+        stopRouterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopRouter();
+            }
+        });
+
         Button startButton = (Button) findViewById(R.id.button_start);
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -75,12 +94,12 @@ public class MainActivity extends ActionBarActivity {
                 callOperation();
             }
         });
-        startRouter();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        stop();
         stopRouter();
     }
 
@@ -89,7 +108,7 @@ public class MainActivity extends ActionBarActivity {
             public void run() {
                 WampRouterBuilder routerBuilder = new WampRouterBuilder();
                 try {
-                    routerBuilder.addRealm("realm1");
+                    routerBuilder.addRealm("default");
                     mRouter = routerBuilder.build();
                 } catch (ApplicationError e1) {
                     return;
@@ -104,12 +123,17 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void start() {
+        String routerUri = mRouterAddressText.getText().toString();
+        if (mServer == null && TextUtils.isEmpty(routerUri)) {
+            return;
+        }
+
         WampClientBuilder builder = new WampClientBuilder();
 
         // Build two clients
         try {
-            builder.withUri("ws://localhost:8080/ws1")
-                    .withRealm("realm1")
+            builder.withUri(TextUtils.isEmpty(routerUri) ? "ws://localhost:8080/ws1" : routerUri)
+                    .withRealm("default")
                     .withInfiniteReconnects()
                     .withReconnectInterval(3, TimeUnit.SECONDS);
             mClient1 = builder.build();
