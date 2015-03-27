@@ -15,3 +15,14 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# RxJava
+-dontwarn sun.misc.Unsafe
+
+# Netty
+-dontwarn io.netty.**
+
+# Jackson
+-dontwarn com.fasterxml.jackson.databind.**
+-keepattributes *Annotation*,EnclosingMethod,Signature
+-keepnames class com.fasterxml.jackson.** { *; }
